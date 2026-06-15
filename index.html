@@ -644,12 +644,15 @@ function callApi(action, payload) {
       }
     } else {
       // ── Mod PWA (fetch ke /exec) ──
-      var isGet = (action === 'getAllData' || action === 'getAllFeedback' || action === 'exportCsv');
+      var isGet = (action === 'getAllData' || action === 'getAllFeedback' || action === 'exportCsv' || action === 'checkLogin');
 
       if (isGet) {
         var url = EXEC_URL + '?action=' + action;
         if (action === 'exportCsv' && payload.filter) {
           url += '&filter=' + encodeURIComponent(JSON.stringify(payload.filter));
+        }
+        if (action === 'checkLogin') {
+          url += '&username=' + encodeURIComponent(payload.username || '') + '&password=' + encodeURIComponent(payload.password || '');
         }
         fetch(url)
           .then(function(res) {
