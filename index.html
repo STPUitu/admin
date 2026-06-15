@@ -19,45 +19,47 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
     height: 100%;
+    overflow: hidden;
     font-family: 'Segoe UI', system-ui, sans-serif;
   }
-  body {
+  #loadingScreen {
+    position: fixed;
+    inset: 0;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
     background: linear-gradient(135deg, #0d3d20 0%, #1a7a3c 60%, #135c2d 100%);
-    text-align: center;
-    padding: 24px;
+    z-index: 10;
+    transition: opacity .3s ease;
+  }
+  #loadingScreen.hidden {
+    opacity: 0;
+    pointer-events: none;
   }
   .box {
     background: #fff;
     border-radius: 18px;
     padding: 40px 32px;
-    max-width: 360px;
-    width: 100%;
+    max-width: 340px;
+    width: 90%;
+    text-align: center;
     box-shadow: 0 24px 80px rgba(0,0,0,.35);
   }
   .logo {
-    width: 96px;
-    height: 96px;
-    border-radius: 20px;
-    margin: 0 auto 18px;
+    width: 88px;
+    height: 88px;
+    border-radius: 18px;
+    margin: 0 auto 16px;
     display: block;
     box-shadow: 0 4px 16px rgba(0,0,0,.15);
   }
   h1 {
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 800;
     color: #135c2d;
-    margin-bottom: 6px;
+    margin-bottom: 16px;
     line-height: 1.4;
-  }
-  p {
-    font-size: 12px;
-    color: #6b7280;
-    line-height: 1.6;
-    margin-bottom: 24px;
   }
   .spinner {
     width: 32px;
@@ -66,47 +68,54 @@
     border-top-color: #1a7a3c;
     border-radius: 50%;
     animation: spin .7s linear infinite;
-    margin: 0 auto 20px;
+    margin: 0 auto 14px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-  a.btn {
-    display: inline-block;
-    width: 100%;
-    padding: 12px;
-    background: #1a7a3c;
-    color: #fff;
-    border-radius: 9px;
-    font-size: 14px;
-    font-weight: 700;
-    text-decoration: none;
-    transition: background .15s;
+  p {
+    font-size: 12px;
+    color: #6b7280;
+    line-height: 1.6;
   }
-  a.btn:hover { background: #135c2d; }
-  .footer-text {
-    font-size: 11px;
-    color: #9ca3af;
-    margin-top: 20px;
+  #appFrame {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
   }
 </style>
 </head>
 <body>
-  <div class="box">
-    <img class="logo" src="./icon-192.png" alt="Logo STPU">
-    <h1>Dashboard Tempahan<br>Sistem Tempahan Produk Unggas</h1>
-    <div class="spinner"></div>
-    <p>Mengalihkan ke dashboard...<br>Redirecting to dashboard...</p>
-    <a class="btn" id="manualLink" href="#">Bukak Dashboard / Open Dashboard</a>
-    <div class="footer-text">© Institut Teknologi Unggas (ITU)</div>
+  <div id="loadingScreen">
+    <div class="box">
+      <img class="logo" src="./icon-192.png" alt="Logo STPU">
+      <h1>Dashboard Tempahan<br>Sistem Tempahan Produk Unggas</h1>
+      <div class="spinner"></div>
+      <p>Memuatkan dashboard...<br>Loading dashboard...</p>
+    </div>
   </div>
 
+  <iframe
+    id="appFrame"
+    src="https://script.google.com/macros/s/AKfycbxbA0IJES5WPVo-U7u5rUuTCleHzwIPYejDfwxpJ9cnDQsgpekSRKETtfDqkDnVjZJSDA/exec"
+    allow="clipboard-write"
+  ></iframe>
+
   <script>
-    var DASHBOARD_URL = 'https://script.google.com/macros/s/AKfycbxbA0IJES5WPVo-U7u5rUuTCleHzwIPYejDfwxpJ9cnDQsgpekSRKETtfDqkDnVjZJSDA/exec';
+    var frame = document.getElementById('appFrame');
+    var loading = document.getElementById('loadingScreen');
 
-    document.getElementById('manualLink').href = DASHBOARD_URL;
+    frame.addEventListener('load', function () {
+      setTimeout(function () {
+        loading.classList.add('hidden');
+      }, 300);
+    });
 
+    // Fallback: kalau load event tak fire dalam masa munasabah, sembunyi juga
     setTimeout(function () {
-      window.location.href = DASHBOARD_URL;
-    }, 900);
+      loading.classList.add('hidden');
+    }, 6000);
   </script>
 </body>
 </html>
