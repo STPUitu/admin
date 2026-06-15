@@ -104,7 +104,8 @@
   <script>
     var DASHBOARD_URL = 'https://script.google.com/macros/s/AKfycbxbA0IJES5WPVo-U7u5rUuTCleHzwIPYejDfwxpJ9cnDQsgpekSRKETtfDqkDnVjZJSDA/exec';
 
-    var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    var isMobile = /Android|iPhone|iPod|Mobile/i.test(navigator.userAgent) ||
+               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
     if (isMobile) {
       // Mobile: redirect terus (iframe GAS sering diblock di mobile browser)
