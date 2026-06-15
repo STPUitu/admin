@@ -98,24 +98,34 @@
 
   <iframe
     id="appFrame"
-    src="https://script.google.com/macros/s/AKfycbxbA0IJES5WPVo-U7u5rUuTCleHzwIPYejDfwxpJ9cnDQsgpekSRKETtfDqkDnVjZJSDA/exec"
     allow="clipboard-write"
   ></iframe>
 
   <script>
-    var frame = document.getElementById('appFrame');
-    var loading = document.getElementById('loadingScreen');
+    var DASHBOARD_URL = 'https://script.google.com/macros/s/AKfycbxbA0IJES5WPVo-U7u5rUuTCleHzwIPYejDfwxpJ9cnDQsgpekSRKETtfDqkDnVjZJSDA/exec';
 
-    frame.addEventListener('load', function () {
+    var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      // Mobile: redirect terus (iframe GAS sering diblock di mobile browser)
+      window.location.href = DASHBOARD_URL;
+    } else {
+      // Desktop: load dalam iframe, URL kekal pendek
+      var frame = document.getElementById('appFrame');
+      var loading = document.getElementById('loadingScreen');
+
+      frame.addEventListener('load', function () {
+        setTimeout(function () {
+          loading.classList.add('hidden');
+        }, 300);
+      });
+
       setTimeout(function () {
         loading.classList.add('hidden');
-      }, 300);
-    });
+      }, 6000);
 
-    // Fallback: kalau load event tak fire dalam masa munasabah, sembunyi juga
-    setTimeout(function () {
-      loading.classList.add('hidden');
-    }, 6000);
+      frame.src = DASHBOARD_URL;
+    }
   </script>
 </body>
 </html>
