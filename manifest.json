@@ -1,13 +1,13 @@
 {
-  "name": "S.T.P.U - Sistem Tempahan Produk Unggas",
-  "short_name": "S.T.P.U",
-  "description": "Sistem Tempahan Produk Unggas - Institut Teknologi Unggas, Jabatan Perkhidmatan Veterinar",
+  "name": "Dashboard Tempahan STPU ITU",
+  "short_name": "STPU ITU",
+  "description": "Dashboard Tempahan Produk Unggas - Sistem Tempahan Produk Unggas, Institut Teknologi Unggas",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#eef2ee",
-  "theme_color": "#1b5e20",
-  "lang": "ms",
+  "background_color": "#f0f4f1",
+  "theme_color": "#135c2d",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "icon-192.png",
