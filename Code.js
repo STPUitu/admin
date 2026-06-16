@@ -1,6 +1,6 @@
 // ============================================================
 //  DASHBOARD TEMPAHAN — INSTITUT TEKNOLOGI UNGGAS
-//  Code.gs v4 — Fix Column Mismatch + Header-Based Mapping
+//  Code.gs v5.1 — Fix: credentials dialih ke Script Properties
 // ============================================================
 
 // ── SUMBER TEMPAHAN ──
@@ -28,29 +28,142 @@ const COL_UPDATEDBY = 'DIKEMASKINI OLEH';
 
 const STATUS_LIST = ['Baru','Disahkan','Sedang Diproses','Siap Kutip','Selesai','Dibatalkan','Tak Ambil'];
 
-// ── CREDENTIALS ADMIN ──
-const ADMIN_CREDENTIALS = [
-  { username: 'Administrator', password: 'Manager1' },
-];
+// ------------------------------------------------------------------
+// ENTRY POINT — GET
+// ------------------------------------------------------------------
+function doGet(e) {
+  const action = e && e.parameter && e.parameter.action;
 
-// ------------------------------------------------------------------
-// ENTRY POINT
-// ------------------------------------------------------------------
-function doGet() {
+  if (action) {
+    return handleApiGet(action, e.parameter);
+  }
+
   return HtmlService.createHtmlOutputFromFile('Index')
     .setTitle('Dashboard Tempahan — ITU')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 // ------------------------------------------------------------------
-// LOGIN
+// ENTRY POINT — POST
+// ------------------------------------------------------------------
+function doPost(e) {
+  try {
+    const body   = JSON.parse(e.postData.contents || '{}');
+    const action = body.action;
+
+    return handleApiPost(action, body);
+  } catch (err) {
+    return jsonOut({ success: false, error: err.message });
+  }
+}
+
+// ------------------------------------------------------------------
+// API ROUTER — GET
+// ------------------------------------------------------------------
+function handleApiGet(action, params) {
+  var result;
+
+  switch (action) {
+    case 'getAllData':
+      result = getAllData();
+      break;
+
+    case 'getAllFeedback':
+      result = getAllFeedback();
+      break;
+
+    case 'checkLogin':
+      result = checkLogin(params.username, params.password);
+      break;
+
+    case 'exportCsv': {
+      const filterParams = params.filter ? JSON.parse(params.filter) : null;
+      const csv = exportToCsv(filterParams);
+      if (params.callback) {
+        return ContentService
+          .createTextOutput(params.callback + '(' + JSON.stringify(csv) + ')')
+          .setMimeType(ContentService.MimeType.JAVASCRIPT);
+      }
+      return ContentService
+        .createTextOutput(csv)
+        .setMimeType(ContentService.MimeType.CSV);
+    }
+
+    case 'updateStatus': {
+      var _id        = params.id;
+      var _status    = params.status;
+      var _notes     = params.notes || '';
+      var _skipEmail = params.skipEmail === 'true';
+      result = updateStatus(_id, _status, _notes, _skipEmail);
+      break;
+    }
+
+    case 'updateStatusBatch': {
+      var _ids     = JSON.parse(params.ids || '[]');
+      var _status2 = params.status;
+      var _notes2  = params.notes || '';
+      result = updateStatusBatch(_ids, _status2, _notes2);
+      break;
+    }
+
+    default:
+      result = JSON.stringify({ success: false, error: 'Action tidak dikenali: ' + action });
+  }
+
+  if (params.callback) {
+    return ContentService
+      .createTextOutput(params.callback + '(' + result + ')')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+
+  return jsonOut(JSON.parse(result));
+}
+
+// ------------------------------------------------------------------
+// API ROUTER — POST
+// ------------------------------------------------------------------
+function handleApiPost(action, body) {
+  switch (action) {
+    case 'checkLogin':
+      return jsonOut(JSON.parse(checkLogin(body.username, body.password)));
+
+    case 'updateStatus':
+      return jsonOut(JSON.parse(updateStatus(body.id, body.status, body.notes, body.skipEmail)));
+
+    case 'updateStatusBatch':
+      return jsonOut(JSON.parse(updateStatusBatch(body.ids, body.status, body.notes)));
+
+    default:
+      return jsonOut({ success: false, error: 'Action tidak dikenali: ' + action });
+  }
+}
+
+// ------------------------------------------------------------------
+// HELPER: output JSON konsisten
+// ------------------------------------------------------------------
+function jsonOut(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ------------------------------------------------------------------
+// LOGIN — credentials dari Script Properties (bukan hardcoded)
 // ------------------------------------------------------------------
 function checkLogin(username, password) {
   try {
-    const found = ADMIN_CREDENTIALS.find(function(c) {
-      return c.username === username && c.password === password;
-    });
-    if (found) return JSON.stringify({ success: true });
+    const props     = PropertiesService.getScriptProperties();
+    const validUser = props.getProperty('ADMIN_USERNAME');
+    const validPass = props.getProperty('ADMIN_PASSWORD');
+
+    if (!validUser || !validPass) {
+      return JSON.stringify({ success: false, error: 'Konfigurasi admin tidak dijumpai.' });
+    }
+
+    if (username === validUser && password === validPass) {
+      return JSON.stringify({ success: true });
+    }
+
     return JSON.stringify({ success: false, error: 'Username atau password salah.' });
   } catch(e) {
     return JSON.stringify({ success: false, error: e.message });
@@ -70,7 +183,6 @@ function getSheetByGid(spreadsheet, gid) {
 
 // ------------------------------------------------------------------
 // HELPER: Cari kolum ikut nama header — return index 0-based
-// Kalau tak jumpa, return -1 (TIDAK cipta kolum baru)
 // ------------------------------------------------------------------
 function findColumnByName(headers, colName) {
   for (var i = 0; i < headers.length; i++) {
@@ -81,31 +193,28 @@ function findColumnByName(headers, colName) {
 
 // ------------------------------------------------------------------
 // HELPER: Cari atau cipta kolum — return index 0-based
-// FIX: lastCol adalah 1-based, index 0-based = lastCol (selepas tambah)
 // ------------------------------------------------------------------
 function getOrCreateColumn(sheet, colName) {
   const lastCol   = sheet.getLastColumn();
   const headerRow = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
 
-  // Cari dulu
   for (var i = 0; i < headerRow.length; i++) {
-    if (String(headerRow[i]).trim().toLowerCase() === colName.toLowerCase()) return i; // 0-based
+    if (String(headerRow[i]).trim().toLowerCase() === colName.toLowerCase()) return i;
   }
 
-  // Tak jumpa — cipta kolum baru
-  const newColNum = lastCol + 1;          // 1-based column number
-  const newColIdx = lastCol;              // 0-based index = lastCol (sebelum tambah = lastCol+1-1)
+  const newColNum = lastCol + 1;
+  const newColIdx = lastCol;
   sheet.getRange(1, newColNum).setValue(colName);
   sheet.getRange(1, newColNum)
     .setBackground('#135c2d')
     .setFontColor('#ffffff')
     .setFontWeight('bold');
 
-  return newColIdx; // 0-based
+  return newColIdx;
 }
 
 // ------------------------------------------------------------------
-// HELPER: Cari index kolum ikut regex pattern — return -1 kalau tak jumpa
+// HELPER: Cari index kolum ikut regex pattern
 // ------------------------------------------------------------------
 function findColumnIndex(headers, pattern) {
   for (var i = 0; i < headers.length; i++) {
@@ -115,7 +224,7 @@ function findColumnIndex(headers, pattern) {
 }
 
 // ------------------------------------------------------------------
-// HELPER: Escape HTML untuk elak XSS dalam email
+// HELPER: Escape HTML
 // ------------------------------------------------------------------
 function escapeHtmlSrv(str) {
   return String(str || '')
@@ -126,7 +235,7 @@ function escapeHtmlSrv(str) {
 }
 
 // ------------------------------------------------------------------
-// HANTAR EMAIL NOTIFIKASI STATUS KEPADA PEMBELI (BM + EN)
+// HANTAR EMAIL NOTIFIKASI STATUS KEPADA PEMBELI
 // ------------------------------------------------------------------
 function sendStatusEmail(buyerEmail, buyerName, productLabel, status, notes) {
   try {
@@ -194,12 +303,10 @@ function sendStatusEmail(buyerEmail, buyerName, productLabel, status, notes) {
 
 // ------------------------------------------------------------------
 // AMBIL SEMUA DATA TEMPAHAN
-// FIX UTAMA: Guna header name untuk map nilai, bukan index rawak
 // ------------------------------------------------------------------
 function getAllData() {
   const allRows = [];
 
-  // Kolum status yang kita urus sendiri — asingkan dari data biasa
   const STATUS_COL_PATTERNS = [
     COL_STATUS.toLowerCase(),
     COL_NOTA.toLowerCase(),
@@ -227,12 +334,9 @@ function getAllData() {
 
       if (data.length < 2) continue;
 
-      // Header row — trim semua
       var headers = data[0].map(function(h) { return String(h).trim(); });
 
-      // Cari index kolum status (by name, bukan assumption)
       var iStatus    = findColumnByName(headers, COL_STATUS);
-      // Cuba variasi kalau tak jumpa
       if (iStatus < 0) iStatus = headers.findIndex(function(h) { return /^status(\s*tempahan)?$/i.test(h); });
 
       var iNota      = findColumnByName(headers, COL_NOTA);
@@ -247,7 +351,6 @@ function getAllData() {
       for (var i = 1; i < data.length; i++) {
         var row = data[i];
 
-        // Skip baris kosong — semak kolum pertama yang bukan status col
         var firstDataCol = headers.findIndex(function(h, idx) { return h !== '' && !isStatusCol(h); });
         var firstVal = firstDataCol >= 0 ? row[firstDataCol] : row[0];
         if (!firstVal || String(firstVal).trim() === '') continue;
@@ -261,19 +364,14 @@ function getAllData() {
           _sheetName : sheet.getName()
         };
 
-        // ── FIX UTAMA: Map setiap nilai ikut NAMA header, bukan index ──
-        // Asingkan kolum status dari kolum data biasa
         headers.forEach(function(h, idx) {
-          // Skip header kosong
           if (!h || h === '') return;
-          // Skip kolum status — kita handle berasingan
           if (isStatusCol(h)) return;
 
           var val = row[idx];
           if (val instanceof Date) {
             val = Utilities.formatDate(val, Session.getScriptTimeZone(), 'dd/MM/yyyy HH:mm:ss');
           }
-          // Kalau header sama ada duplicate, tambah suffix
           var key = h;
           if (obj.hasOwnProperty(key) && !key.startsWith('_')) {
             key = h + '_' + idx;
@@ -281,7 +379,6 @@ function getAllData() {
           obj[key] = (val !== undefined && val !== null) ? val : '';
         });
 
-        // Assign nilai status secara berasingan
         obj._status    = (iStatus    >= 0 && row[iStatus]    != null && String(row[iStatus]).trim()    !== '') ? String(row[iStatus])    : 'Baru';
         obj._notes     = (iNota      >= 0 && row[iNota]      != null && String(row[iNota]).trim()      !== '') ? String(row[iNota])      : '';
         obj._updatedAt = (iUpdated   >= 0 && row[iUpdated]   != null && String(row[iUpdated]).trim()   !== '') ? String(row[iUpdated])   : '';
@@ -299,7 +396,6 @@ function getAllData() {
 
 // ------------------------------------------------------------------
 // AMBIL SEMUA MAKLUMBALAS
-// FIX: Sama — guna header name mapping
 // ------------------------------------------------------------------
 function getAllFeedback() {
   const allRows = [];
@@ -318,7 +414,6 @@ function getAllFeedback() {
       for (var i = 1; i < data.length; i++) {
         var row = data[i];
 
-        // Skip baris kosong
         if (!row[0] || String(row[0]).trim() === '') continue;
 
         var obj = {
@@ -327,7 +422,6 @@ function getAllFeedback() {
           _rowIdx : i + 1
         };
 
-        // Map ikut nama header
         headers.forEach(function(h, idx) {
           if (!h || h === '') return;
           var val = row[idx];
@@ -353,7 +447,6 @@ function getAllFeedback() {
 
 // ------------------------------------------------------------------
 // KEMASKINI STATUS TEMPAHAN
-// FIX: getOrCreateColumn dah fix — guna return value dengan betul
 // ------------------------------------------------------------------
 function updateStatus(id, status, notes, skipEmail) {
   try {
@@ -371,8 +464,6 @@ function updateStatus(id, status, notes, skipEmail) {
     var ss    = SpreadsheetApp.openById(sourceId);
     var sheet = getSheetByGid(ss, gid);
 
-    // getOrCreateColumn returns 0-based index
-    // sheet.getRange uses 1-based column — so add 1
     var iStatus    = getOrCreateColumn(sheet, COL_STATUS)    + 1;
     var iNota      = getOrCreateColumn(sheet, COL_NOTA)      + 1;
     var iUpdated   = getOrCreateColumn(sheet, COL_UPDATED)   + 1;
@@ -403,7 +494,6 @@ function updateStatus(id, status, notes, skipEmail) {
         .setFontWeight('bold');
     }
 
-    // EMAIL NOTIFICATION — skip kalau bulk update atau explicitly disabled
     if (skipEmail !== true) {
       try {
         var refreshedData  = sheet.getDataRange().getValues();
