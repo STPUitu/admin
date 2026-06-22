@@ -10,10 +10,12 @@ Dashboard admin untuk menguruskan tempahan produk unggas bagi Unit Penetasan, IT
 
 Sistem ini terdiri dari dua bahagian:
 
-1. **GitHub Pages** (`stpuitu.github.io/admin/`) — menjadi PWA shell yang boleh dipasang di skrin utama
-2. **Google Apps Script** — backend yang membaca data dari Google Sheets dan menjawab API request
+1. **GitHub Pages** (`stpuitu.github.io/admin/`) — UI penuh + PWA shell yang boleh dipasang di skrin utama
+2. **Google Apps Script** — pure JSON API backend yang membaca/menulis data dari Google Sheets
 
-Pengguna admin membuka GitHub Pages, login, dan dashboard berkomunikasi dengan GAS backend untuk ambil/kemaskini data.
+Pengguna admin membuka GitHub Pages, login, dan dashboard berkomunikasi dengan GAS backend melalui JSONP untuk ambil/kemaskini data.
+
+> **Arkitektur ini mengikuti model yang sama dengan `stpuitu/tempah`** — UI sepenuhnya di GitHub Pages, GAS hanya jadi API.
 
 ---
 
@@ -21,48 +23,51 @@ Pengguna admin membuka GitHub Pages, login, dan dashboard berkomunikasi dengan G
 
 ```
 GitHub Pages (stpuitu.github.io/admin/)
-├── index.html    ← PWA shell (i kecil)
+├── index.html    ← UI penuh dashboard + PWA shell (i kecil)
 ├── sw.js         ← Service Worker
 ├── manifest.json ← PWA manifest
 ├── icon-192.png
 └── icon-512.png
 
 GAS Project (tempahanitu@gmail.com)
-├── Code.js       ← Backend: doGet(e) routing + semua fungsi API
-└── Index.html    ← Dashboard template (I besar)
+└── Code.gs       ← Pure JSON API: doGet(e) + doPost(e) routing
 ```
 
-Apabila `index.html` di GitHub Pages perlu data, ia memanggil GAS Web App URL (`EXEC_URL`) dengan parameter `?action=...&callback=...` menggunakan teknik JSONP.
+Apabila `index.html` di GitHub Pages perlu data, ia memanggil GAS Web App URL dengan parameter `?action=...&callback=...` menggunakan teknik **JSONP** (cross-origin safe).
 
 ---
 
 ## Fail Utama
 
 ### `index.html` (i kecil) — GitHub Pages
-PWA shell yang diakses melalui `stpuitu.github.io/admin/`. Mengandungi:
-- Keseluruhan UI dashboard (sidebar, topbar hamburger, semua page)
-- Fungsi `callApi()` dalam mod dual: guna `google.script.run` bila dalam GAS context, guna JSONP bila dalam GitHub Pages context
+UI penuh dashboard. Mengandungi:
+- Keseluruhan UI (sidebar, hamburger menu, semua page)
+- `GAS_URL` — URL GAS `/exec` deployment
+- `gasCall()` — helper JSONP untuk semua panggilan API
+- `gasGet()` / `gasPost()` — wrapper (kedua-duanya guna JSONP GET internally)
 - Pendaftaran `sw.js` untuk keupayaan PWA
 
 ### `Index.html` (I besar) — GAS Project
-Template dashboard yang diserve oleh `doGet()` apabila tiada parameter `?action`. **Jangan sentuh** kecuali perlu ubah struktur HTML yang GAS render secara langsung.
+Template lama yang diserve oleh `doGet()` apabila tiada parameter `?action`. Kini **tidak digunakan lagi** — UI sudah berpindah ke GitHub Pages. Kekalkan sebagai backup sahaja.
 
-### `Code.js` — GAS Project
-Backend utama. `doGet(e)` melakukan routing:
-- Ada `?action` → jalankan fungsi API, balas dalam format JSONP
-- Tiada `?action` → serve `Index.html`
+### `Code.gs` — GAS Project
+Backend pure API. `doGet(e)` melakukan routing:
+- Ada `?action` → jalankan fungsi, balas JSON (dengan JSONP `callback` jika ada)
+- Tiada `?action` → serve `Index.html` (legacy fallback)
 
-Fungsi API yang disokong: `getAllData`, `getAllFeedback`, `checkLogin`, `exportToCsv`, `updateStatus`, `updateStatusBatch`. Semua GET action sokong parameter `?callback=` untuk JSONP.
+Fungsi API yang disokong: `getAllData`, `getAllFeedback`, `checkLogin`, `exportToCsv`, `updateStatus`, `updateStatusBatch`.
+
+**GAS deployment mesti di-set:**
+- Execute as: **Me (tempahanitu@gmail.com)**
+- Who has access: **Anyone** ← bukan "Anyone with Google account"
 
 ### `sw.js` — GitHub Pages
-Service Worker dengan `CACHE_NAME = 'admin-cache-v1'`. Nama unik ini dipilih supaya tidak clash dengan Service Worker repo lain (contoh: repo tempah) yang mungkin guna nama berbeza.
-
-Strategi cache:
-- Request ke `script.google.com` / `script.googleusercontent.com` → **network-first**, fallback JSON error bila offline
-- Semua fail shell lain → **cache-first**, kemudian network
+Service Worker. Strategi cache:
+- Request ke `script.google.com` → **network-first**, fallback JSON error bila offline
+- Fail shell (HTML/CSS/JS/icon) → **cache-first**
 
 ### `manifest.json` — GitHub Pages
-PWA manifest. `name: "Dashboard Tempahan STPU ITU"`, scope terhad kepada `./` (path `/admin/`).
+PWA manifest. `name: "STPU Admin — Dashboard Tempahan ITU"`, scope `./`.
 
 ---
 
@@ -72,12 +77,11 @@ PWA manifest. `name: "Dashboard Tempahan STPU ITU"`, scope terhad kepada `./` (p
 |--|--------------|--------------|
 | **Huruf** | i kecil | I besar |
 | **Lokasi** | GitHub Pages repo | GAS project |
-| **Fungsi** | PWA shell | Dashboard template GAS |
-| **Edit bila** | Ubah UI, callApi, sw.js | Ubah struktur HTML dalam GAS |
-| **Deploy ke** | `git push origin main` | Deploy baru dalam GAS |
-| **LARANGAN** | Jangan letak dalam GAS | Jangan rename — `doGet()` rujuk nama ini |
+| **Fungsi** | UI penuh + PWA shell | Legacy GAS template (tidak aktif) |
+| **Edit bila** | Ubah UI, API call, layout | — |
+| **Deploy ke** | `git push origin main` | — |
 
-GitHub **case-sensitive** — kedua-dua fail berbeza dan boleh wujud serentak. Jangan keliru.
+GitHub **case-sensitive** — kedua-dua fail berbeza. Jangan keliru semasa `git add`.
 
 ---
 
@@ -88,22 +92,20 @@ GitHub **case-sensitive** — kedua-dua fail berbeza dan boleh wujud serentak. J
 ```bash
 git add index.html sw.js manifest.json
 git commit -m "keterangan perubahan"
-git push origin main
+git push https://STPUitu@github.com/STPUitu/admin.git main
 ```
 
 GitHub Pages auto-update dalam masa ~1-2 minit.
 
-### Kemaskini GAS Backend (`Code.js`)
+### Kemaskini GAS Backend (`Code.gs`)
 
-**WAJIB buat New Version setiap kali edit `Code.js`** — tanpanya, URL lama kekal guna kod lama.
+**WAJIB buat New Version setiap kali edit `Code.gs`** — tanpanya, URL lama kekal guna kod lama.
 
-1. Edit `Code.js` dalam GAS editor
+1. Edit `Code.gs` dalam GAS editor
 2. Klik **Deploy → Manage deployments**
-3. Klik ikon edit ✏️ pada deployment semasa
+3. Klik ikon edit ✏️ pada deployment aktif (`STPU-FixPWA`)
 4. Tukar "Version" kepada **New version**
-5. Klik **Deploy** — URL `/exec` kekal sama, tiada perubahan diperlukan pada `index.html`
-
-Jika tambah scope baharu (contoh: MailApp), jalankan fungsi berkaitan dalam GAS editor dahulu untuk trigger authorization sebelum deploy.
+5. Klik **Deploy** — URL `/exec` kekal sama
 
 ---
 
@@ -116,21 +118,21 @@ Jika tambah scope baharu (contoh: MailApp), jalankan fungsi berkaitan dalam GAS 
 
 ### Android (Chrome)
 1. Buka **https://stpuitu.github.io/admin/**
-2. Menu (⋮) → "Add to Home screen"
-3. Icon Admin STPU terpapar di home screen
+2. Notifikasi "App installed" akan muncul automatik, atau
+3. Menu (⋮) → "Add to Home screen"
 
 ### iPhone / iPad (Safari)
 1. Buka **https://stpuitu.github.io/admin/** dalam Safari
 2. Butang Share (□↑) → "Add to Home Screen"
-3. Icon Admin STPU terpapar di home screen
 
-> **Nota iPad**: Safari pada iPad menyamar sebagai desktop user-agent. Tetap guna langkah Safari di atas — jangan ikut langkah Chrome.
+### iPad (Chrome)
+> **Nota**: iPad Chrome memerlukan GAS deployment di-set **Who has access: Anyone** (bukan "Anyone with Google account"). Jika masih gagal, guna Safari pada iPad.
 
 ---
 
 ## Sumber Data
 
-Dashboard membaca dari 6 Google Sheet tempahan dan 1 Google Sheet maklumbalas (3 tab). Rujuk array `SOURCES` dan `FEEDBACK_SOURCES` dalam `Code.js`.
+Dashboard membaca dari 6 Google Sheet tempahan dan 1 Google Sheet maklumbalas (3 tab). Rujuk array `SOURCES` dan `FEEDBACK_SOURCES` dalam `Code.gs`.
 
 **Aliran status tempahan:**
 `Baru` → `Disahkan` → `Sedang Diproses` → `Siap Kutip` → `Selesai` / `Dibatalkan` / `Tak Ambil`
@@ -143,4 +145,4 @@ Email notifikasi dihantar ke pembeli secara automatik (BM + EN) setiap kali stat
 
 - **GAS Akaun**: tempahanitu@gmail.com
 - **GitHub Repo**: https://github.com/STPUitu/admin
-- **Login Admin**: lihat `ADMIN_CREDENTIALS` dalam `Code.js`
+- **Credentials**: disimpan dalam GAS Script Properties (bukan hardcoded)
