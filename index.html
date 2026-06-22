@@ -3,11 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" type="image/png" href="https://stpuitu.github.io/stpu/icon-192.png">
-<link rel="apple-touch-icon" href="https://stpuitu.github.io/stpu/icon-192.png">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#135c2d">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="STPU ITU">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="STPU Admin">
 <title>Dashboard Tempahan — ITU</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -191,7 +194,6 @@
   .fb-stat-num   { font-size: 26px; font-weight: 800; color: var(--purple); line-height: 1; margin-bottom: 4px; }
   .fb-stat-label { font-size: 12px; color: var(--gray); }
 
-  /* Rating stars */
   .stars { color: #f59e0b; font-size: 14px; letter-spacing: 1px; }
   .rating-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
   .rating-5 { background: #d1fae5; color: #065f46; }
@@ -200,7 +202,6 @@
   .rating-2 { background: #fee2e2; color: #991b1b; }
   .rating-1 { background: #fee2e2; color: #991b1b; }
 
-  /* Feedback card list */
   .fb-card-list { display: flex; flex-direction: column; gap: 12px; }
   .fb-card {
     background: #fff; border-radius: var(--radius); padding: 16px 18px;
@@ -235,87 +236,31 @@
   ::-webkit-scrollbar-track { background: #f1f1f1; }
   ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
 
-  /* ══════════════════════════════════════════
-     ── LOGOUT CONFIRM MODAL (BAHARU) ──
-  ══════════════════════════════════════════ */
+  /* ── LOGOUT MODAL ── */
   .logout-modal-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,.5);
-    z-index: 9100;
-    align-items: center;
-    justify-content: center;
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.5); z-index: 9100;
+    align-items: center; justify-content: center;
     backdrop-filter: blur(2px);
   }
   .logout-modal-overlay.open { display: flex; }
-
   .logout-modal {
-    background: #fff;
-    border-radius: 18px;
-    width: 90%;
-    max-width: 360px;
+    background: #fff; border-radius: 18px; width: 90%; max-width: 360px;
     box-shadow: 0 24px 64px rgba(0,0,0,.3);
-    animation: logoutPop .22s cubic-bezier(.34,1.56,.64,1);
-    overflow: hidden;
+    animation: logoutPop .22s cubic-bezier(.34,1.56,.64,1); overflow: hidden;
   }
-  @keyframes logoutPop {
-    from { transform: scale(.85); opacity: 0; }
-    to   { transform: scale(1);   opacity: 1; }
-  }
-
-  .logout-modal-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 28px 0 16px;
-  }
-  .logout-icon-circle {
-    width: 60px; height: 60px;
-    border-radius: 50%;
-    background: #fee2e2;
-    display: flex; align-items: center; justify-content: center;
-  }
+  @keyframes logoutPop { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .logout-modal-icon { display: flex; align-items: center; justify-content: center; padding: 28px 0 16px; }
+  .logout-icon-circle { width: 60px; height: 60px; border-radius: 50%; background: #fee2e2; display: flex; align-items: center; justify-content: center; }
   .logout-icon-circle svg { width: 28px; height: 28px; stroke: #dc2626; }
-
-  .logout-modal-text {
-    text-align: center;
-    padding: 0 28px 24px;
-  }
-  .logout-modal-text h3 {
-    font-size: 16px; font-weight: 700; color: #111827;
-    margin-bottom: 6px;
-  }
-  .logout-modal-text p {
-    font-size: 13px; color: #6b7280; line-height: 1.6;
-  }
-
-  .logout-modal-actions {
-    display: flex;
-    gap: 0;
-    border-top: 1px solid #f3f4f6;
-  }
-  .logout-modal-actions button {
-    flex: 1;
-    padding: 14px 0;
-    border: none;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
-    transition: background .15s;
-  }
-  .logout-btn-cancel {
-    background: #fff;
-    color: #374151;
-    border-right: 1px solid #f3f4f6 !important;
-    border-radius: 0 0 0 18px;
-  }
-  .logout-btn-cancel:hover { background: #f9fafb; }
-  .logout-btn-confirm {
-    background: #fff;
-    color: #dc2626;
-    border-radius: 0 0 18px 0;
-  }
+  .logout-modal-text { text-align: center; padding: 0 28px 24px; }
+  .logout-modal-text h3 { font-size: 16px; font-weight: 700; color: #111827; margin-bottom: 6px; }
+  .logout-modal-text p  { font-size: 13px; color: #6b7280; line-height: 1.6; }
+  .logout-modal-actions { display: flex; border-top: 1px solid #f3f4f6; }
+  .logout-modal-actions button { flex: 1; padding: 14px 0; border: none; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background .15s; }
+  .logout-btn-cancel  { background: #fff; color: #374151; border-right: 1px solid #f3f4f6 !important; border-radius: 0 0 0 18px; }
+  .logout-btn-cancel:hover  { background: #f9fafb; }
+  .logout-btn-confirm { background: #fff; color: #dc2626; border-radius: 0 0 18px 0; }
   .logout-btn-confirm:hover { background: #fff5f5; }
 </style>
 </head>
@@ -343,7 +288,7 @@
 
 <div id="toast"></div>
 
-<!-- ══ LOGOUT CONFIRM MODAL (BAHARU) ══ -->
+<!-- LOGOUT CONFIRM MODAL -->
 <div class="logout-modal-overlay" id="logoutModal">
   <div class="logout-modal">
     <div class="logout-modal-icon">
@@ -581,6 +526,59 @@
 
 <script>
 // ══════════════════════════════════════════════
+//  CONFIG — tukar URL ni kepada GAS /exec URL
+// ══════════════════════════════════════════════
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbxbA0IJES5WPVo-U7u5rUuTCleHzwIPYejDfwxpJ9cnDQsgpekSRKETtfDqkDnVjZJSDA/exec';
+
+// ══════════════════════════════════════════════
+//  HELPER: panggil GAS API via JSONP (cross-origin safe)
+// ══════════════════════════════════════════════
+function gasCall(params) {
+  return new Promise(function(resolve, reject) {
+    var cbName = '_gcb' + Date.now() + Math.floor(Math.random()*9999);
+    var script = document.createElement('script');
+    var allParams = Object.assign({}, params, { callback: cbName });
+    var qs = Object.keys(allParams).map(function(k) {
+      return encodeURIComponent(k) + '=' + encodeURIComponent(
+        typeof allParams[k] === 'object' ? JSON.stringify(allParams[k]) : allParams[k]
+      );
+    }).join('&');
+
+    var timer = setTimeout(function() {
+      cleanup();
+      reject(new Error('Timeout — tiada response dari GAS'));
+    }, 30000);
+
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+
+    window[cbName] = function(data) {
+      cleanup();
+      resolve(data);
+    };
+    script.onerror = function() {
+      cleanup();
+      reject(new Error('Gagal sambung ke GAS'));
+    };
+    script.src = GAS_URL + '?' + qs;
+    document.body.appendChild(script);
+  });
+}
+
+// gasGet dan gasPost kedua-dua guna JSONP GET (GAS tak support CORS POST)
+function gasGet(params) {
+  return gasCall(params);
+}
+
+function gasPost(body) {
+  // Tukar POST ke GET params — Code.gs handleApiGet() dah support semua actions
+  return gasCall(body);
+}
+
+// ══════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════
 var allData      = [];
@@ -601,6 +599,17 @@ var fbHeaders        = [];
 
 var MONTHS = ['','Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'];
 var SESSION_KEY = 'itu_dashboard_auth';
+
+// ══════════════════════════════════════════════
+//  PWA: daftar service worker
+// ══════════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js').catch(function(err) {
+      console.warn('SW registration failed:', err);
+    });
+  });
+}
 
 // ══════════════════════════════════════════════
 //  LOGIN / LOGOUT
@@ -631,9 +640,10 @@ function doLogin() {
   }
   btnEl.disabled = true; btnEl.textContent = '⏳ Mengesahkan...';
 
-  google.script.run
-    .withSuccessHandler(function(json) {
-      var res = JSON.parse(json);
+  // ← DULU: google.script.run.checkLogin(username, password)
+  // ← SEKARANG: fetch ke GAS dengan ?action=checkLogin
+  gasGet({ action: 'checkLogin', username: username, password: password })
+    .then(function(res) {
       btnEl.disabled = false; btnEl.textContent = '🔐 Log Masuk';
       if (res.success) {
         sessionStorage.setItem(SESSION_KEY, 'ok');
@@ -647,21 +657,15 @@ function doLogin() {
         document.getElementById('loginPass').focus();
       }
     })
-    .withFailureHandler(function(err) {
+    .catch(function(err) {
       btnEl.disabled = false; btnEl.textContent = '🔐 Log Masuk';
-      errEl.textContent = '❌ Ralat: ' + err.message;
+      errEl.textContent = '❌ Ralat sambungan: ' + err.message;
       errEl.classList.add('show');
-    })
-    .checkLogin(username, password);
+    });
 }
 
-// ── LOGOUT — guna custom modal, bukan confirm() ──
-function doLogout() {
-  document.getElementById('logoutModal').classList.add('open');
-}
-function closeLogoutModal() {
-  document.getElementById('logoutModal').classList.remove('open');
-}
+function doLogout() { document.getElementById('logoutModal').classList.add('open'); }
+function closeLogoutModal() { document.getElementById('logoutModal').classList.remove('open'); }
 function confirmLogout() {
   sessionStorage.removeItem(SESSION_KEY);
   document.getElementById('logoutModal').classList.remove('open');
@@ -673,19 +677,20 @@ function confirmLogout() {
   document.getElementById('loginError').classList.remove('show');
   setTimeout(function() { document.getElementById('loginUser').focus(); }, 150);
 }
-// Klik luar modal = tutup
-document.getElementById('logoutModal').addEventListener('click', function(e) {
-  if (e.target === this) closeLogoutModal();
-});
+document.getElementById('logoutModal').addEventListener('click', function(e) { if (e.target === this) closeLogoutModal(); });
 
 // ══════════════════════════════════════════════
 //  LOAD DATA
 // ══════════════════════════════════════════════
 function loadAllData() {
   showLoading(true);
-  google.script.run
-    .withSuccessHandler(function(json) {
-      allData = JSON.parse(json);
+
+  // ← DULU: google.script.run.getAllData()
+  // ← SEKARANG: fetch ke GAS dengan ?action=getAllData
+  gasGet({ action: 'getAllData' })
+    .then(function(data) {
+      // GAS return array terus (bukan JSON string lagi)
+      allData = Array.isArray(data) ? data : JSON.parse(data);
       buildDynamicHeaders();
       buildFilters();
       applyFilter();
@@ -693,27 +698,26 @@ function loadAllData() {
       showLoading(false);
       document.getElementById('lastRefresh').textContent = new Date().toLocaleTimeString('ms-MY');
     })
-    .withFailureHandler(function(err) {
+    .catch(function(err) {
       showLoading(false); showToast('❌ Ralat: ' + err.message, 'error');
-    })
-    .getAllData();
+    });
 }
 
 function loadFeedbackData() {
   document.getElementById('fbCardList').innerHTML =
     '<div class="empty-state"><div class="big-icon" style="font-size:32px;margin-bottom:8px;">⏳</div><p>Memuatkan maklumbalas...</p></div>';
 
-  google.script.run
-    .withSuccessHandler(function(json) {
-      allFeedback = JSON.parse(json);
+  // ← DULU: google.script.run.getAllFeedback()
+  gasGet({ action: 'getAllFeedback' })
+    .then(function(data) {
+      allFeedback = Array.isArray(data) ? data : JSON.parse(data);
       buildFbHeaders();
       applyFbFilter();
     })
-    .withFailureHandler(function(err) {
+    .catch(function(err) {
       document.getElementById('fbCardList').innerHTML =
         '<div class="empty-state"><div class="big-icon">⚠️</div><p>Ralat memuatkan maklumbalas: ' + escHtml(err.message) + '</p></div>';
-    })
-    .getAllFeedback();
+    });
 }
 
 function refreshData() { loadAllData(); }
@@ -887,10 +891,18 @@ function applyBulkStatus() {
   if(selectedIds.size===0){ showToast('Tiada rekod dipilih!','error'); return; }
   showLoading(true);
   var ids = [...selectedIds];
-  google.script.run
-    .withSuccessHandler(function(json){ var res=JSON.parse(json); showLoading(false); if(res.success){ ids.forEach(function(id){var r=allData.find(function(x){return x._id===id;}); if(r) r._status=status;}); clearSelection(); applyFilter(); renderDashboard(); showToast('✅ '+res.count+' rekod dikemaskini → '+status,'success'); } else showToast('❌ '+res.error,'error'); })
-    .withFailureHandler(function(err){ showLoading(false); showToast('❌ '+err.message,'error'); })
-    .updateStatusBatch(ids, status, '');
+
+  // ← DULU: google.script.run.updateStatusBatch(ids, status, '')
+  gasPost({ action: 'updateStatusBatch', ids: ids, status: status, notes: '' })
+    .then(function(res) {
+      showLoading(false);
+      if(res.success){
+        ids.forEach(function(id){var r=allData.find(function(x){return x._id===id;}); if(r) r._status=status;});
+        clearSelection(); applyFilter(); renderDashboard();
+        showToast('✅ '+res.count+' rekod dikemaskini → '+status,'success');
+      } else showToast('❌ '+res.error,'error');
+    })
+    .catch(function(err){ showLoading(false); showToast('❌ '+err.message,'error'); });
 }
 
 // ══════════════════════════════════════════════
@@ -902,14 +914,14 @@ function openModal(id) {
   document.getElementById('modalTitle').textContent = '📋 Tempahan — '+row._source;
 
   var FIELDS = [
-    { pattern: /^timestamp$|cap masa|tarikh/i,                 label: 'Timestamp',       full: false },
-    { pattern: /email/i,                                        label: 'Email Address',   full: false },
-    { pattern: /nama\s*pembeli|nama\s*penuh|^nama$/i,          label: 'Nama Pembeli',    full: false },
-    { pattern: /telefon|phone|whatsapp|hp/i,                   label: 'No. Telefon',     full: false },
-    { pattern: /alamat/i,                                       label: 'Alamat Pembeli',  full: true  },
-    { pattern: /tempahan\s*saya|jenis\s*tempahan|^tempahan$/i, label: 'Tempahan',        full: false },
-    { pattern: /no\s*tempahan|nombor\s*tempahan/i,             label: 'No. Tempahan',    full: false },
-    { pattern: /jumlah\s*tempahan|kuantiti|quantity|bilangan/i,label: 'Jumlah Tempahan', full: false },
+    { pattern: /^timestamp$|cap masa|tarikh/i,                  label: 'Timestamp',       full: false },
+    { pattern: /email/i,                                         label: 'Email Address',   full: false },
+    { pattern: /nama\s*pembeli|nama\s*penuh|^nama$/i,           label: 'Nama Pembeli',    full: false },
+    { pattern: /telefon|phone|whatsapp|hp/i,                    label: 'No. Telefon',     full: false },
+    { pattern: /alamat/i,                                        label: 'Alamat Pembeli',  full: true  },
+    { pattern: /tempahan\s*saya|jenis\s*tempahan|^tempahan$/i,  label: 'Tempahan',        full: false },
+    { pattern: /no\s*tempahan|nombor\s*tempahan/i,              label: 'No. Tempahan',    full: false },
+    { pattern: /jumlah\s*tempahan|kuantiti|quantity|bilangan/i, label: 'Jumlah Tempahan', full: false },
   ];
 
   var keys = Object.keys(row).filter(function(k){return !k.startsWith('_');});
@@ -934,13 +946,21 @@ function closeModal() { document.getElementById('orderModal').classList.remove('
 
 function saveStatus() {
   if(!currentModalId) return;
-  var status=document.getElementById('modalStatus').value;
-  var notes=document.getElementById('modalNotes').value;
-  document.getElementById('btnSave').disabled=true;
-  google.script.run
-    .withSuccessHandler(function(json){ var res=JSON.parse(json); document.getElementById('btnSave').disabled=false; if(res.success){ var r=allData.find(function(x){return x._id===currentModalId;}); if(r){r._status=status;r._notes=notes;} closeModal(); applyFilter(); renderDashboard(); showToast('✅ Status berjaya dikemaskini!','success'); } else showToast('❌ '+res.error,'error'); })
-    .withFailureHandler(function(err){ document.getElementById('btnSave').disabled=false; showToast('❌ '+err.message,'error'); })
-    .updateStatus(currentModalId, status, notes);
+  var status = document.getElementById('modalStatus').value;
+  var notes  = document.getElementById('modalNotes').value;
+  document.getElementById('btnSave').disabled = true;
+
+  // ← DULU: google.script.run.updateStatus(currentModalId, status, notes)
+  gasPost({ action: 'updateStatus', id: currentModalId, status: status, notes: notes, skipEmail: false })
+    .then(function(res) {
+      document.getElementById('btnSave').disabled = false;
+      if(res.success){
+        var r=allData.find(function(x){return x._id===currentModalId;}); if(r){r._status=status;r._notes=notes;}
+        closeModal(); applyFilter(); renderDashboard();
+        showToast('✅ Status berjaya dikemaskini!','success');
+      } else showToast('❌ '+res.error,'error');
+    })
+    .catch(function(err){ document.getElementById('btnSave').disabled=false; showToast('❌ '+err.message,'error'); });
 }
 
 document.getElementById('orderModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
@@ -967,7 +987,8 @@ function renderDashboard() {
 
   var bySource={}; allData.forEach(function(r){bySource[r._source]=(bySource[r._source]||0)+1;});
   var colors=['#1a7a3c','#2563eb','#f5a623','#9333ea','#d63031','#0891b2'];
-  document.getElementById('sourceGrid').innerHTML=Object.entries(bySource).map(function([n,c],i){
+  document.getElementById('sourceGrid').innerHTML=Object.entries(bySource).map(function(entry,i){
+    var n=entry[0], c=entry[1];
     return '<div style="background:#fff;border-radius:8px;padding:14px;border-left:4px solid '+colors[i%colors.length]+';box-shadow:var(--shadow);"><div style="font-size:22px;font-weight:800;">'+c+'</div><div style="font-size:12px;color:var(--gray);margin-top:3px;">'+escHtml(n)+'</div></div>';
   }).join('');
 
@@ -1001,8 +1022,7 @@ function applyFbFilter() {
     if (rating !== 'all') {
       var rKey = getRatingKey(row);
       if (!rKey) return false;
-      var val = String(row[rKey]||'').trim();
-      if (val !== rating) return false;
+      if (String(row[rKey]||'').trim() !== rating) return false;
     }
     if (search) {
       if (!JSON.stringify(Object.values(row)).toLowerCase().includes(search)) return false;
@@ -1029,15 +1049,13 @@ function renderFeedbackStats() {
 
   var html='<div class="fb-stat"><div class="fb-stat-num">'+total+'</div><div class="fb-stat-label">Jumlah Maklumbalas</div></div>'
     +'<div class="fb-stat"><div class="fb-stat-num">'+(avg==='—'?'—':'⭐ '+avg)+'</div><div class="fb-stat-label">Purata Rating</div></div>';
-  Object.entries(bySource).forEach(function([src,cnt]){
-    html+='<div class="fb-stat"><div class="fb-stat-num">'+cnt+'</div><div class="fb-stat-label">'+escHtml(src)+'</div></div>';
+  Object.entries(bySource).forEach(function(entry){
+    html+='<div class="fb-stat"><div class="fb-stat-num">'+entry[1]+'</div><div class="fb-stat-label">'+escHtml(entry[0])+'</div></div>';
   });
   document.getElementById('fbStatRow').innerHTML=html;
 }
 
-function renderFeedback() {
-  applyFbFilter();
-}
+function renderFeedback() { applyFbFilter(); }
 
 function _doRenderFeedback() {
   var start=(fbCurrentPage-1)*fbPerPage;
@@ -1148,12 +1166,31 @@ function destroyChart(id){if(chartInstances[id]){chartInstances[id].destroy();de
 //  EXPORT
 // ══════════════════════════════════════════════
 function doExport() {
-  var params={source:document.getElementById('expSource').value,status:document.getElementById('expStatus').value,month:document.getElementById('expMonth').value,year:document.getElementById('expYear').value};
+  var params = {
+    source: document.getElementById('expSource').value,
+    status: document.getElementById('expStatus').value,
+    month:  document.getElementById('expMonth').value,
+    year:   document.getElementById('expYear').value
+  };
   showLoading(true);
-  google.script.run
-    .withSuccessHandler(function(csv){showLoading(false); if(!csv){showToast('⚠️ Tiada data untuk dieksport','error');return;} var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}); var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url; a.download='HasilLadang_Export_'+new Date().toISOString().slice(0,10)+'.csv'; a.click(); URL.revokeObjectURL(url); showToast('✅ CSV berjaya dimuat turun!','success');})
-    .withFailureHandler(function(err){showLoading(false);showToast('❌ '+err.message,'error');})
-    .exportToCsv(JSON.stringify(params));
+
+  // Export CSV via JSONP — GAS return CSV string dalam callback
+  gasCall({ action: 'exportCsv', filter: JSON.stringify(params) })
+    .then(function(csv) {
+      showLoading(false);
+      if(!csv){ showToast('⚠️ Tiada data untuk dieksport','error'); return; }
+      // GAS exportToCsv return string CSV, bukan JSON object
+      var csvStr = typeof csv === 'string' ? csv : JSON.stringify(csv);
+      var blob = new Blob(['\uFEFF'+csvStr], {type:'text/csv;charset=utf-8;'});
+      var url  = URL.createObjectURL(blob);
+      var a    = document.createElement('a');
+      a.href   = url;
+      a.download = 'HasilLadang_Export_'+new Date().toISOString().slice(0,10)+'.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('✅ CSV berjaya dimuat turun!','success');
+    })
+    .catch(function(err){ showLoading(false); showToast('❌ '+err.message,'error'); });
 }
 
 // ══════════════════════════════════════════════
