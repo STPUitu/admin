@@ -965,6 +965,13 @@ function openModal(id) {
   var matched=[]; var used=new Set();
   FIELDS.forEach(function(f){ var key=keys.find(function(k){return f.pattern.test(k)&&!used.has(k);}); if(key){matched.push({key:key,label:f.label,full:f.full});used.add(key);} });
 
+  var buyerNameKey  = keys.find(function(k){return /nama\s*pembeli|nama\s*penuh|^nama$|name/i.test(k);});
+  var buyerPhoneKey = keys.find(function(k){return /telefon|phone|whatsapp|hp|no\.\s*tel/i.test(k);});
+  var buyerEmailKey = keys.find(function(k){return /email/i.test(k);});
+  row._contactName  = buyerNameKey  ? String(row[buyerNameKey]  || '') : '';
+  row._contactPhone = buyerPhoneKey ? String(row[buyerPhoneKey] || '') : '';
+  row._contactEmail = buyerEmailKey ? String(row[buyerEmailKey] || '') : '';
+
   var html='<div class="field-grid">';
   matched.forEach(function(f){ html+='<div class="field-item'+(f.full?' field-full':'')+'"><div class="field-label">'+escHtml(f.label)+'</div><div class="field-value">'+escHtml(String(row[f.key]||'—'))+'</div></div>'; });
   html+='</div><hr class="divider"><div style="background:#f9fffe;border-radius:8px;padding:14px;border:1.5px solid #d1fae5;">'
@@ -973,13 +980,80 @@ function openModal(id) {
     +['Baru','Disahkan','Sedang Diproses','Siap Kutip','Selesai','Dibatalkan','Tak Ambil'].map(function(s){return '<option'+(row._status===s?' selected':'')+'>'+s+'</option>';}).join('')
     +'</select></div><div class="form-group"><label>Nota Admin (Pilihan)</label><textarea id="modalNotes" placeholder="Contoh: Pembeli dah bayar deposit...">'+escHtml(row._notes||'')+'</textarea></div>'
     +(row._updatedAt?'<small style="color:var(--gray);font-size:11px;">Dikemaskini: '+row._updatedAt+' oleh '+row._updatedBy+'</small>':'')
-    +'</div>';
+    +'</div><hr class="divider"><div style="background:#fff;border-radius:8px;padding:14px;border:1.5px solid #e5e7eb;">'
+    +'<div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:10px;">📞 Hubungi Pembeli</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:8px;">'
+    +'<button type="button" class="btn btn-primary btn-sm" onclick="contactBuyerWhatsapp()">📲 WhatsApp</button>'
+    +'<button type="button" class="btn btn-outline btn-sm" onclick="contactBuyerEmail()">📧 Email</button>'
+    +'<button type="button" class="btn btn-outline btn-sm" onclick="copyBuyerMessage()">📋 Copy Mesej</button>'
+    +'</div></div>';
 
   document.getElementById('modalBody').innerHTML = html;
   document.getElementById('orderModal').classList.add('open');
 }
 
 function closeModal() { document.getElementById('orderModal').classList.remove('open'); currentModalId=null; }
+
+function getCurrentContactRow() {
+  return allData.find(function(r){return r._id===currentModalId;}) || null;
+}
+
+function getCurrentModalStatus(row) {
+  var statusEl = document.getElementById('modalStatus');
+  return statusEl ? statusEl.value : (row && row._status) || 'Baru';
+}
+
+function buildBuyerMessage(row) {
+  var name = row._contactName || 'Tuan/Puan';
+  var product = row._source || 'tempahan anda';
+  var status = getCurrentModalStatus(row);
+  var message = 'Salam sejahtera ' + name + ',\n\n'
+    + 'Makluman daripada Institut Teknologi Unggas (ITU) berkaitan tempahan ' + product + '.\n\n'
+    + 'Status semasa tempahan anda: ' + status + '.\n\n';
+
+  if (status === 'Siap Kutip') {
+    message += 'Tempahan anda telah siap untuk dikutip. Sila hadir ke ITU mengikut waktu kutipan yang telah ditetapkan. ';
+  } else if (status === 'Dibatalkan') {
+    message += 'Tempahan anda telah dibatalkan. Sila hubungi pihak ITU jika ada sebarang pertanyaan. ';
+  } else {
+    message += 'Status tempahan anda telah dikemaskini. ';
+  }
+
+  return message + '\n\nTerima kasih.';
+}
+
+function normaliseMalaysiaPhone(phone) {
+  var cleaned = String(phone || '').replace(/[\s\-()]/g, '');
+  if (cleaned.charAt(0) === '+') cleaned = cleaned.substring(1);
+  if (cleaned.charAt(0) === '0') cleaned = '60' + cleaned.substring(1);
+  return /^60\d{8,11}$/.test(cleaned) ? cleaned : '';
+}
+
+function contactBuyerWhatsapp() {
+  var row = getCurrentContactRow();
+  if (!row) return;
+  var phone = normaliseMalaysiaPhone(row._contactPhone);
+  if (!phone) { showToast('❌ No. telefon pembeli tidak sah atau tiada.','error'); return; }
+  window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(buildBuyerMessage(row)), '_blank');
+}
+
+function contactBuyerEmail() {
+  var row = getCurrentContactRow();
+  if (!row) return;
+  var email = String(row._contactEmail || '').trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('❌ Email pembeli tidak sah atau tiada.','error'); return; }
+  var subject = 'Kemaskini Status Tempahan ITU - ' + (row._source || 'Tempahan');
+  window.location.href = 'mailto:' + email + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(buildBuyerMessage(row));
+}
+
+function copyBuyerMessage() {
+  var row = getCurrentContactRow();
+  if (!row) return;
+  var message = buildBuyerMessage(row);
+  navigator.clipboard.writeText(message)
+    .then(function(){ showToast('✅ Mesej berjaya disalin!','success'); })
+    .catch(function(){ showToast('❌ Gagal salin mesej.','error'); });
+}
 
 function saveStatus() {
   if(!currentModalId) return;
