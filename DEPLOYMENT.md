@@ -75,6 +75,17 @@ GitHub Pages auto-update dalam masa ~1-2 minit selepas push.
 - Status lama `Siap Kutip` dinormalisasi kepada `Sedang Diproses`; `Tak Ambil` dinormalisasi kepada `Tidak Ambil`
 - Wording kutip/pickup lama telah dibuang dari UI dan mesej Contact Assist
 - Dashboard stat **Selesai** kini mengira `Selesai` sahaja
+- Dashboard **"⚠ Perlu Tindakan"** dikira frontend-only daripada `allData`:
+  - `Tempahan Baru > 3 hari`
+  - `Sedang Diproses > 7 hari`
+  - `Tidak Ambil`
+  - `Tiada No. Telefon`
+  - `Tiada Email`
+  - Klik kategori membuka Senarai Tempahan yang ditapis kepada rekod sepadan
+  - Reset filter mengosongkan action item filter
+- Senarai Tempahan mobile kini menggunakan card view, manakala desktop kekal menggunakan table sedia ada
+- Mobile card view menggunakan `filteredData` dan pagination yang sama seperti desktop table
+- Mobile card memaparkan buyer name, source/product, timestamp, phone number jika ada, order number jika ada, status badge, dan button **"✏️ Buka"**
 - Contact Assist **"📞 Hubungi Pembeli"** berada dalam modal tempahan dan hanya frontend-only:
   - WhatsApp membuka `wa.me` dengan mesej siap diisi
   - Email membuka `mailto:` dengan subject/body siap diisi
@@ -82,7 +93,7 @@ GitHub Pages auto-update dalam masa ~1-2 minit selepas push.
   - Tiada auto-send
   - Mesej ikut status semasa yang dipilih dalam modal: `Selesai` = tempahan telah selesai, `Tidak Ambil` = tempahan direkodkan sebagai tidak diambil/dituntut, `Dibatalkan` = tempahan telah dibatalkan, status lain = status tempahan telah dikemaskini
 
-Perubahan Contact Assist tidak memerlukan deployment GAS kerana tiada perubahan backend.
+Perubahan Contact Assist, Perlu Tindakan, dan mobile card view tidak memerlukan deployment GAS kerana tiada perubahan backend.
 
 ### Jika `EXEC_URL` perlu ditukar:
 Situasi ini berlaku hanya jika GAS deployment dipadam dan deployment baru dicipta (URL berubah). Kemaskini dalam `index.html`:

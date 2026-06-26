@@ -222,10 +222,33 @@ Dashboard stat **Selesai** hanya mengira rekod berstatus `Selesai`; ia tidak lag
 Dashboard menggunakan breakpoint `max-width: 860px`:
 - Desktop: sidebar tetap di kiri (220px), kandungan utama ada `margin-left: 220px`
 - Mobile: sidebar tersembunyi (`transform: translateX(-100%)`), hamburger button (☰) muncul di topbar untuk toggle sidebar dengan overlay
+- Senarai Tempahan desktop kekal menggunakan table sedia ada
+- Senarai Tempahan mobile menggunakan card view melalui CSS media query; table disembunyikan pada mobile dan card disembunyikan pada desktop
+- Mobile card view menggunakan `filteredData` dan pagination yang sama dengan table desktop
+- Kad mobile memaparkan buyer name, source/product, timestamp, phone number jika ada, order number jika ada, status badge, dan button `✏️ Buka` yang memanggil `openModal(row._id)`
 
 ---
 
-## 11. GSAP Animations
+## 11. Dashboard: Perlu Tindakan
+
+Dashboard mempunyai widget **"⚠ Perlu Tindakan"** yang dikira di frontend sahaja daripada `allData`. Tiada perubahan backend atau GAS call tambahan.
+
+Kategori action item:
+| Kategori | Sumber kiraan |
+|----------|---------------|
+| `Tempahan Baru > 3 hari` | `_status === 'Baru'` dan timestamp lebih 3 hari |
+| `Sedang Diproses > 7 hari` | `_status === 'Sedang Diproses'` dan timestamp lebih 7 hari |
+| `Tidak Ambil` | `_status === 'Tidak Ambil'` |
+| `Tiada No. Telefon` | Tiada kolum/ nilai telefon yang sah |
+| `Tiada Email` | Tiada kolum/ nilai email yang sah |
+
+Setiap kategori memaparkan count. Klik kategori menyimpan padanan `_id` di frontend dan membuka **Senarai Tempahan** dengan `filteredData` ditapis kepada rekod tersebut. `clearFilter()` turut mengosongkan action item filter.
+
+Feature ini frontend-only dalam `index.html` dan tidak memerlukan deployment GAS.
+
+---
+
+## 12. GSAP Animations
 
 Dashboard menggunakan GSAP 3.12.5 (CDN) untuk animasi:
 
@@ -238,7 +261,7 @@ Dashboard menggunakan GSAP 3.12.5 (CDN) untuk animasi:
 
 ---
 
-## 12. Contact Assist dalam Modal Tempahan
+## 13. Contact Assist dalam Modal Tempahan
 
 Modal tempahan mempunyai seksyen **"📞 Hubungi Pembeli"** yang membantu admin menyediakan mesej kepada pembeli tanpa menghantar apa-apa secara automatik.
 
@@ -259,7 +282,7 @@ Feature ini frontend-only dalam `index.html`. Ia tidak memerlukan perubahan GAS,
 
 ---
 
-## 13. Semua Actions Guna JSONP
+## 14. Semua Actions Guna JSONP
 
 **SEMUA actions — GET dan write — guna JSONP.** Tiada `fetch()` POST langsung dari GitHub Pages context.
 

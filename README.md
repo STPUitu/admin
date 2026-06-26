@@ -48,6 +48,8 @@ UI penuh dashboard. Mengandungi:
 - `gasCall()` — helper JSONP untuk semua panggilan API
 - `gasGet()` / `gasPost()` — wrapper (kedua-duanya guna JSONP GET internally)
 - Pendaftaran `sw.js` untuk keupayaan PWA
+- Dashboard **"⚠ Perlu Tindakan"** — widget frontend-only yang mengira tindakan dari `allData`
+- Senarai Tempahan mobile card view — paparan kad untuk skrin kecil, table kekal untuk desktop
 - Contact Assist dalam modal tempahan: WhatsApp, Email, dan Copy Mesej berdasarkan status semasa yang dipilih
 
 ### `Index.html` (I besar) — GAS Project
@@ -155,6 +157,25 @@ Status lama/bukan rasmi seperti `Siap Kutip`, `Tak Ambil`, dan semua wording kut
 Stat dashboard **Selesai** kini mengira `Selesai` sahaja.
 
 Email notifikasi dihantar ke pembeli secara automatik (BM + EN) setiap kali status dikemaskini secara individu. Bulk update tidak hantar email.
+
+### Dashboard: Perlu Tindakan
+
+Dashboard mempunyai widget **"⚠ Perlu Tindakan"** yang dikira sepenuhnya di frontend daripada `allData`; tiada backend call atau deployment GAS diperlukan.
+
+Kategori yang dipaparkan:
+- `Tempahan Baru > 3 hari`
+- `Sedang Diproses > 7 hari`
+- `Tidak Ambil`
+- `Tiada No. Telefon`
+- `Tiada Email`
+
+Setiap kategori menunjukkan count. Klik kategori akan membuka **Senarai Tempahan** dengan rekod yang sepadan sahaja. Butang Reset pada filter akan mengosongkan action filter tersebut.
+
+### Senarai Tempahan Mobile
+
+Pada skrin desktop, Senarai Tempahan kekal menggunakan table sedia ada. Pada skrin mobile, rekod dipaparkan sebagai kad menggunakan `filteredData` dan pagination yang sama seperti table.
+
+Kad mobile memaparkan nama pembeli, sumber/produk, timestamp, nombor telefon jika ada, nombor tempahan jika ada, status badge, dan butang **"✏️ Buka"** untuk membuka modal tempahan.
 
 ### Hubungi Pembeli / Contact Assist
 
