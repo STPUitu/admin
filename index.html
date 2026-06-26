@@ -386,6 +386,10 @@
       <div class="stat-card blue">  <div class="stat-num" id="statBulanIni">—</div><div class="stat-label">Bulan Ini</div><div class="stat-sub" id="statBulanLabel">—</div></div>
     </div>
     <div class="card">
+      <div class="card-header"><span class="card-title">⚠️ Perlu Tindakan</span></div>
+      <div class="card-body"><div id="actionWidget"></div></div>
+    </div>
+    <div class="card">
       <div class="card-header"><span class="card-title">📦 Tempahan Mengikut Produk/Sumber</span></div>
       <div class="card-body"><div id="sourceGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;"></div></div>
     </div>
@@ -632,6 +636,8 @@ var fbCurrentPage    = 1;
 var fbPerPage        = 10;
 var fbActiveTab      = 'all';
 var fbHeaders        = [];
+var actionFilterIds  = null;
+var actionWidgetMatches = [];
 
 var MONTHS = ['','Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogos','Sep','Okt','Nov','Dis'];
 var SESSION_KEY = 'itu_dashboard_auth';
@@ -783,6 +789,9 @@ function getNameKey(row) {
 function getPhoneKey(row) {
   return Object.keys(row).find(function(k) { return !k.startsWith('_') && /telefon|phone|hp|no\./i.test(k); });
 }
+function getEmailKey(row) {
+  return Object.keys(row).find(function(k) { return !k.startsWith('_') && /email/i.test(k); });
+}
 function getRatingKey(row) {
   return Object.keys(row).find(function(k) { return !k.startsWith('_') && /rating|penilaian|markah|skor|bintang/i.test(k); });
 }
@@ -826,6 +835,7 @@ function applyFilter() {
   var year   = document.getElementById('filterYear').value;
 
   filteredData = allData.filter(function(row) {
+    if (actionFilterIds && !actionFilterIds.has(row._id)) return false;
     if (source !== 'all' && row._source !== source) return false;
     if (status !== 'all' && row._status !== status) return false;
     if (month !== 'all' || year !== 'all') {
@@ -849,6 +859,7 @@ function applyFilter() {
 }
 
 function clearFilter() {
+  actionFilterIds = null;
   ['searchInput'].forEach(function(id){document.getElementById(id).value='';});
   ['filterSource','filterStatus','filterMonth','filterYear'].forEach(function(id){document.getElementById(id).value='all';});
   applyFilter();
@@ -1097,6 +1108,7 @@ function renderDashboard() {
   document.getElementById('statBatal').textContent   = counts['Dibatalkan']||0;
   document.getElementById('statBulanIni').textContent= bulanIni;
   document.getElementById('statBulanLabel').textContent = MONTHS[parseInt(curM)]+' '+curY;
+  renderActionWidget();
 
   var bySource={}; allData.forEach(function(r){bySource[r._source]=(bySource[r._source]||0)+1;});
   var colors=['#1a7a3c','#2563eb','#f5a623','#9333ea','#d63031','#0891b2'];
@@ -1202,8 +1214,8 @@ function _doRenderFeedback() {
           return '<div class="result-field"><div class="fb-field-label">'+escHtml(k)+'</div><div class="fb-field-value">'+escHtml(truncate(String(row[k]||'—'),80))+'</div></div>';
         }).join('')
         +'</div></div>';
-    }).join('');
-  }
+  }).join('');
+}
 
   var totalPages=Math.ceil(filteredFeedback.length/fbPerPage);
   document.getElementById('fbPageInfo').textContent='Paparan '+(start+1)+'–'+end+' daripada '+filteredFeedback.length+' rekod';
@@ -1212,6 +1224,59 @@ function _doRenderFeedback() {
   document.getElementById('fbPageButtons').innerHTML=ph;
   document.getElementById('fbBtnPrev').disabled=fbCurrentPage<=1;
   document.getElementById('fbBtnNext').disabled=fbCurrentPage>=totalPages;
+}
+
+function parseRowDate(row) {
+  var tsKey = getTimestampKey(row);
+  if (!tsKey || !row[tsKey]) return null;
+  var raw = String(row[tsKey]).trim();
+  var m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if (m) return new Date(+m[3], +m[2]-1, +m[1], +(m[4]||0), +(m[5]||0), +(m[6]||0));
+  var parsed = new Date(raw);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function isOlderThanDays(row, days) {
+  var d = parseRowDate(row);
+  if (!d) return false;
+  return (Date.now() - d.getTime()) > days * 24 * 60 * 60 * 1000;
+}
+
+function isMissingValue(row, keyFn) {
+  var key = keyFn(row);
+  return !key || !String(row[key] || '').trim();
+}
+
+function renderActionWidget() {
+  var items = [
+    { label: 'Tempahan Baru > 3 hari', rows: allData.filter(function(r){ return r._status === 'Baru' && isOlderThanDays(r, 3); }) },
+    { label: 'Sedang Diproses > 7 hari', rows: allData.filter(function(r){ return r._status === 'Sedang Diproses' && isOlderThanDays(r, 7); }) },
+    { label: 'Tidak Ambil', rows: allData.filter(function(r){ return r._status === 'Tidak Ambil'; }) },
+    { label: 'Tiada No. Telefon', rows: allData.filter(function(r){ return isMissingValue(r, getPhoneKey); }) },
+    { label: 'Tiada Email', rows: allData.filter(function(r){ return isMissingValue(r, getEmailKey); }) }
+  ];
+
+  var active = items.filter(function(item){ return item.rows.length > 0; });
+  actionWidgetMatches = active.map(function(item){ return item.rows.map(function(r){ return r._id; }); });
+  var el = document.getElementById('actionWidget');
+  if (!active.length) {
+    el.innerHTML = '<div style="color:var(--gray);font-size:13px;">Tiada tindakan segera.</div>';
+    return;
+  }
+
+  el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;">'
+    + active.map(function(item, i) {
+      return '<button type="button" class="btn btn-outline" style="justify-content:space-between;width:100%;padding:12px 14px;background:#fff;" onclick="openActionItems('+i+')">'
+        + '<span>'+escHtml(item.label)+'</span><strong style="font-size:18px;color:var(--red);">'+item.rows.length+'</strong></button>';
+    }).join('')
+    + '</div>';
+}
+
+function openActionItems(index) {
+  actionFilterIds = new Set(actionWidgetMatches[index] || []);
+  ['searchInput'].forEach(function(id){document.getElementById(id).value='';});
+  ['filterSource','filterStatus','filterMonth','filterYear'].forEach(function(id){document.getElementById(id).value='all';});
+  showPage('orders');
 }
 
 function changeFbPage(dir) {
