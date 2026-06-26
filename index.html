@@ -565,6 +565,7 @@
 //  CONFIG — tukar URL ni kepada GAS /exec URL
 // ══════════════════════════════════════════════
 var GAS_URL = 'https://script.google.com/macros/s/AKfycbxbA0IJES5WPVo-U7u5rUuTCleHzwIPYejDfwxpJ9cnDQsgpekSRKETtfDqkDnVjZJSDA/exec';
+var API_KEY = 'STPU_ADMIN_2026_CHANGE_ME';
 
 // ══════════════════════════════════════════════
 //  HELPER: panggil GAS API via JSONP (cross-origin safe)
@@ -573,7 +574,7 @@ function gasCall(params) {
   return new Promise(function(resolve, reject) {
     var cbName = '_gcb' + Date.now() + Math.floor(Math.random()*9999);
     var script = document.createElement('script');
-    var allParams = Object.assign({}, params, { callback: cbName });
+    var allParams = Object.assign({}, params, { apiKey: API_KEY, callback: cbName });
     var qs = Object.keys(allParams).map(function(k) {
       return encodeURIComponent(k) + '=' + encodeURIComponent(
         typeof allParams[k] === 'object' ? JSON.stringify(allParams[k]) : allParams[k]
@@ -1214,6 +1215,10 @@ function doExport() {
   gasCall({ action: 'exportCsv', filter: JSON.stringify(params) })
     .then(function(csv) {
       showLoading(false);
+      if(csv && typeof csv === 'object' && csv.success === false){
+        showToast('❌ ' + (csv.error || 'Akses tidak sah.'),'error');
+        return;
+      }
       if(!csv){ showToast('⚠️ Tiada data untuk dieksport','error'); return; }
       // GAS exportToCsv return string CSV, bukan JSON object
       var csvStr = typeof csv === 'string' ? csv : JSON.stringify(csv);

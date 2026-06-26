@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stpu-admin-cache-v1';
+const CACHE_NAME = 'stpu-admin-cache-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -33,9 +33,18 @@ self.addEventListener('fetch', function(event) {
   const url = event.request.url;
 
   // GAS API — sentiasa ambil data terkini, jangan cache
-  if (url.indexOf('script.google.com') !== -1) {
+  if (url.indexOf('script.google.com') !== -1 || url.indexOf('script.googleusercontent.com') !== -1) {
     event.respondWith(
       fetch(event.request).catch(function() {
+        const requestUrl = new URL(event.request.url);
+        const callback = requestUrl.searchParams.get('callback');
+        if (callback) {
+          return new Response(
+            callback + '(' + JSON.stringify({ success: false, error: 'Tiada sambungan internet.' }) + ')',
+            { headers: { 'Content-Type': 'application/javascript' } }
+          );
+        }
+
         return new Response(
           JSON.stringify({ success: false, error: 'Tiada sambungan internet.' }),
           { headers: { 'Content-Type': 'application/json' } }

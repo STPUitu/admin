@@ -28,6 +28,8 @@ const COL_UPDATEDBY = 'DIKEMASKINI OLEH';
 
 const STATUS_LIST = ['Baru','Disahkan','Sedang Diproses','Siap Kutip','Selesai','Dibatalkan','Tak Ambil'];
 
+const API_AUTH_ERROR = { success: false, error: 'Akses tidak sah. Sila semak API key.' };
+
 // ------------------------------------------------------------------
 // ENTRY POINT — GET
 // ------------------------------------------------------------------
@@ -35,6 +37,8 @@ function doGet(e) {
   const action = e && e.parameter && e.parameter.action;
 
   if (action) {
+    const authError = validateApiKey(e.parameter);
+    if (authError) return apiErrorOut(authError, e.parameter);
     return handleApiGet(action, e.parameter);
   }
 
@@ -51,10 +55,39 @@ function doPost(e) {
     const body   = JSON.parse(e.postData.contents || '{}');
     const action = body.action;
 
+    if (action) {
+      const authError = validateApiKey(body);
+      if (authError) return jsonOut(authError);
+    }
+
     return handleApiPost(action, body);
   } catch (err) {
     return jsonOut({ success: false, error: err.message });
   }
+}
+
+// ------------------------------------------------------------------
+// HELPER: API key dari Script Properties
+// ------------------------------------------------------------------
+function validateApiKey(params) {
+  const providedKey = params && params.apiKey;
+  const validKey = PropertiesService.getScriptProperties().getProperty('ADMIN_API_KEY');
+
+  if (!providedKey || !validKey || providedKey !== validKey) {
+    return API_AUTH_ERROR;
+  }
+
+  return null;
+}
+
+function apiErrorOut(obj, params) {
+  if (params && params.callback) {
+    return ContentService
+      .createTextOutput(params.callback + '(' + JSON.stringify(obj) + ')')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+
+  return jsonOut(obj);
 }
 
 // ------------------------------------------------------------------
