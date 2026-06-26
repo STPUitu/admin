@@ -140,7 +140,7 @@ GitHub Pages auto-update dalam masa ~1-2 minit.
 Dashboard membaca dari 6 Google Sheet tempahan dan 1 Google Sheet maklumbalas (3 tab). Rujuk array `SOURCES` dan `FEEDBACK_SOURCES` dalam `Code.gs`.
 
 **Aliran status tempahan:**
-`Baru` → `Disahkan` → `Sedang Diproses` → `Siap Kutip` → `Selesai` / `Dibatalkan` / `Tak Ambil`
+`Baru` → `Disahkan` → `Sedang Diproses` → `Selesai` / `Tidak Ambil` / `Dibatalkan`
 
 Email notifikasi dihantar ke pembeli secara automatik (BM + EN) setiap kali status dikemaskini secara individu. Bulk update tidak hantar email.
 
@@ -151,7 +151,7 @@ Dalam modal tempahan, seksyen **"📞 Hubungi Pembeli"** membantu admin menyedia
 - **📧 Email** — buka email client dengan subject dan body siap diisi
 - **📋 Copy Mesej** — salin mesej ke clipboard
 
-Mesej dijana dalam Bahasa Malaysia mengikut status semasa yang dipilih dalam modal. Status `Siap Kutip` memasukkan arahan kutipan, status `Dibatalkan` meminta pembeli hubungi ITU jika ada pertanyaan, dan status lain memaklumkan bahawa status tempahan telah dikemaskini.
+Mesej dijana dalam Bahasa Malaysia mengikut status semasa yang dipilih dalam modal. Status `Selesai` memaklumkan tempahan telah selesai, status `Tidak Ambil` memaklumkan tempahan direkodkan sebagai tidak diambil/dituntut, status `Dibatalkan` memaklumkan tempahan telah dibatalkan, dan status lain memaklumkan bahawa status tempahan telah dikemaskini.
 
 Contact Assist adalah **frontend-only**. Ia tidak auto-send apa-apa, tidak menulis ke Sheet, dan tidak memerlukan deployment GAS.
 

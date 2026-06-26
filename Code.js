@@ -26,7 +26,7 @@ const COL_NOTA      = 'NOTA ADMIN';
 const COL_UPDATED   = 'DIKEMASKINI PADA';
 const COL_UPDATEDBY = 'DIKEMASKINI OLEH';
 
-const STATUS_LIST = ['Baru','Disahkan','Sedang Diproses','Siap Kutip','Selesai','Dibatalkan','Tak Ambil'];
+const STATUS_LIST = ['Baru','Disahkan','Sedang Diproses','Selesai','Tidak Ambil','Dibatalkan'];
 
 const API_AUTH_ERROR = { success: false, error: 'Akses tidak sah. Sila semak API key.' };
 
@@ -267,6 +267,14 @@ function escapeHtmlSrv(str) {
     .replace(/"/g, '&quot;');
 }
 
+function normalizeStatusSrv(status) {
+  var s = String(status || '').trim();
+  if (/^siap\s*kutip$/i.test(s)) return 'Sedang Diproses';
+  if (/^tak\s*ambil$/i.test(s)) return 'Tidak Ambil';
+  if (STATUS_LIST.indexOf(s) >= 0) return s;
+  return s || 'Baru';
+}
+
 // ------------------------------------------------------------------
 // HANTAR EMAIL NOTIFIKASI STATUS KEPADA PEMBELI
 // ------------------------------------------------------------------
@@ -278,12 +286,12 @@ function sendStatusEmail(buyerEmail, buyerName, productLabel, status, notes) {
       'Baru'            : { bm: '🆕 Baru',            en: 'New' },
       'Disahkan'        : { bm: '✅ Disahkan',         en: 'Confirmed' },
       'Sedang Diproses' : { bm: '⚙️ Sedang Diproses', en: 'In Process' },
-      'Siap Kutip'      : { bm: '📦 Siap Kutip',       en: 'Ready for Collection' },
       'Selesai'         : { bm: '🎉 Selesai',          en: 'Completed' },
-      'Dibatalkan'      : { bm: '❌ Dibatalkan',        en: 'Cancelled' },
-      'Tak Ambil'       : { bm: '⚠️ Tak Ambil',        en: 'Uncollected' }
+      'Tidak Ambil'     : { bm: '⚠️ Tidak Ambil',      en: 'Uncollected' },
+      'Dibatalkan'      : { bm: '❌ Dibatalkan',        en: 'Cancelled' }
     };
 
+    status = normalizeStatusSrv(status);
     var statusInfo   = statusMap[status] || { bm: status, en: status };
     var safeName     = escapeHtmlSrv(buyerName || 'Pelanggan');
     var safeProduct  = escapeHtmlSrv(productLabel);
@@ -412,7 +420,7 @@ function getAllData() {
           obj[key] = (val !== undefined && val !== null) ? val : '';
         });
 
-        obj._status    = (iStatus    >= 0 && row[iStatus]    != null && String(row[iStatus]).trim()    !== '') ? String(row[iStatus])    : 'Baru';
+        obj._status    = normalizeStatusSrv((iStatus >= 0 && row[iStatus] != null && String(row[iStatus]).trim() !== '') ? String(row[iStatus]) : 'Baru');
         obj._notes     = (iNota      >= 0 && row[iNota]      != null && String(row[iNota]).trim()      !== '') ? String(row[iNota])      : '';
         obj._updatedAt = (iUpdated   >= 0 && row[iUpdated]   != null && String(row[iUpdated]).trim()   !== '') ? String(row[iUpdated])   : '';
         obj._updatedBy = (iUpdatedBy >= 0 && row[iUpdatedBy] != null && String(row[iUpdatedBy]).trim() !== '') ? String(row[iUpdatedBy]) : '';
@@ -514,10 +522,9 @@ function updateStatus(id, status, notes, skipEmail) {
       'Baru'            : { bg: '#dbeafe', font: '#1e40af' },
       'Disahkan'        : { bg: '#d1fae5', font: '#065f46' },
       'Sedang Diproses' : { bg: '#fef3c7', font: '#92400e' },
-      'Siap Kutip'      : { bg: '#ede9fe', font: '#5b21b6' },
       'Selesai'         : { bg: '#bbf7d0', font: '#14532d' },
-      'Dibatalkan'      : { bg: '#fee2e2', font: '#991b1b' },
-      'Tak Ambil'       : { bg: '#fef9c3', font: '#854d0e' }
+      'Tidak Ambil'     : { bg: '#fef9c3', font: '#854d0e' },
+      'Dibatalkan'      : { bg: '#fee2e2', font: '#991b1b' }
     };
     var color = statusColors[status];
     if (color) {

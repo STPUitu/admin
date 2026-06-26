@@ -154,10 +154,9 @@
   .badge-Baru           { background: #dbeafe; color: #1e40af; }
   .badge-Disahkan       { background: #d1fae5; color: #065f46; }
   .badge-SedangDiproses { background: #fef3c7; color: #92400e; }
-  .badge-SiapKutip      { background: #ede9fe; color: #5b21b6; }
   .badge-Selesai        { background: #d1fae5; color: #065f46; }
   .badge-Dibatalkan     { background: #fee2e2; color: #991b1b; }
-  .badge-TakAmbil       { background: #fef9c3; color: #854d0e; }
+  .badge-TidakAmbil     { background: #fef9c3; color: #854d0e; }
   .source-tag { display: inline-block; padding: 2px 8px; border-radius: 5px; font-size: 11px; background: #f3f4f6; color: #374151; font-weight: 600; }
 
   /* ── PAGINATION ── */
@@ -382,7 +381,7 @@
       <div class="stat-card green"> <div class="stat-num" id="statTotal">—</div>  <div class="stat-label">Jumlah Tempahan</div>  <div class="stat-sub">Semua sumber</div></div>
       <div class="stat-card blue">  <div class="stat-num" id="statBaru">—</div>   <div class="stat-label">Baru / Belum Disahkan</div></div>
       <div class="stat-card yellow"><div class="stat-num" id="statProses">—</div>  <div class="stat-label">Dalam Proses</div>  <div class="stat-sub">Disahkan + Diproses</div></div>
-      <div class="stat-card green"> <div class="stat-num" id="statSelesai">—</div> <div class="stat-label">Selesai / Siap Kutip</div></div>
+      <div class="stat-card green"> <div class="stat-num" id="statSelesai">—</div> <div class="stat-label">Selesai</div></div>
       <div class="stat-card red">   <div class="stat-num" id="statBatal">—</div>   <div class="stat-label">Dibatalkan</div></div>
       <div class="stat-card blue">  <div class="stat-num" id="statBulanIni">—</div><div class="stat-label">Bulan Ini</div><div class="stat-sub" id="statBulanLabel">—</div></div>
     </div>
@@ -413,7 +412,7 @@
         <select id="filterStatus" onchange="applyFilter()">
           <option value="all">Semua Status</option>
           <option>Baru</option><option>Disahkan</option><option>Sedang Diproses</option>
-          <option>Siap Kutip</option><option>Selesai</option><option>Dibatalkan</option><option>Tak Ambil</option>
+          <option>Selesai</option><option>Tidak Ambil</option><option>Dibatalkan</option>
         </select>
         <select id="filterMonth" onchange="applyFilter()">
           <option value="all">Semua Bulan</option>
@@ -430,7 +429,7 @@
         <select id="bulkStatus" style="padding:5px 8px;border-radius:6px;border:1.5px solid #d1d5db;font-size:12px;font-family:inherit;">
           <option value="">-- Tukar Status --</option>
           <option>Baru</option><option>Disahkan</option><option>Sedang Diproses</option>
-          <option>Siap Kutip</option><option>Selesai</option><option>Dibatalkan</option><option>Tak Ambil</option>
+          <option>Selesai</option><option>Tidak Ambil</option><option>Dibatalkan</option>
         </select>
         <button class="btn btn-yellow btn-sm" onclick="applyBulkStatus()">✔ Guna</button>
         <button class="btn btn-outline btn-sm" onclick="clearSelection()">✖ Nyahpilih</button>
@@ -509,7 +508,7 @@
           <select id="expStatus">
             <option value="all">Semua Status</option>
             <option>Baru</option><option>Disahkan</option><option>Sedang Diproses</option>
-            <option>Siap Kutip</option><option>Selesai</option><option>Dibatalkan</option><option>Tak Ambil</option>
+            <option>Selesai</option><option>Tidak Ambil</option><option>Dibatalkan</option>
           </select>
         </div>
         <div class="form-group">
@@ -728,6 +727,7 @@ function loadAllData() {
     .then(function(data) {
       // GAS return array terus (bukan JSON string lagi)
       allData = Array.isArray(data) ? data : JSON.parse(data);
+      allData.forEach(function(row){ row._status = normalizeStatusClient(row._status); });
       buildDynamicHeaders();
       buildFilters();
       applyFilter();
@@ -977,7 +977,7 @@ function openModal(id) {
   html+='</div><hr class="divider"><div style="background:#f9fffe;border-radius:8px;padding:14px;border:1.5px solid #d1fae5;">'
     +'<div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:10px;">⚙️ Kemaskini Status</div>'
     +'<div class="form-group"><label>Status Semasa</label><select id="modalStatus">'
-    +['Baru','Disahkan','Sedang Diproses','Siap Kutip','Selesai','Dibatalkan','Tak Ambil'].map(function(s){return '<option'+(row._status===s?' selected':'')+'>'+s+'</option>';}).join('')
+    +['Baru','Disahkan','Sedang Diproses','Selesai','Tidak Ambil','Dibatalkan'].map(function(s){return '<option'+(row._status===s?' selected':'')+'>'+s+'</option>';}).join('')
     +'</select></div><div class="form-group"><label>Nota Admin (Pilihan)</label><textarea id="modalNotes" placeholder="Contoh: Pembeli dah bayar deposit...">'+escHtml(row._notes||'')+'</textarea></div>'
     +(row._updatedAt?'<small style="color:var(--gray);font-size:11px;">Dikemaskini: '+row._updatedAt+' oleh '+row._updatedBy+'</small>':'')
     +'</div><hr class="divider"><div style="background:#fff;border-radius:8px;padding:14px;border:1.5px solid #e5e7eb;">'
@@ -1011,10 +1011,12 @@ function buildBuyerMessage(row) {
     + 'Makluman daripada Institut Teknologi Unggas (ITU) berkaitan tempahan ' + product + '.\n\n'
     + 'Status semasa tempahan anda: ' + status + '.\n\n';
 
-  if (status === 'Siap Kutip') {
-    message += 'Tempahan anda telah siap untuk dikutip. Sila hadir ke ITU mengikut waktu kutipan yang telah ditetapkan. ';
+  if (status === 'Selesai') {
+    message += 'Tempahan anda telah selesai. ';
+  } else if (status === 'Tidak Ambil') {
+    message += 'Tempahan ini direkodkan sebagai tidak diambil/dituntut menurut rekod admin. ';
   } else if (status === 'Dibatalkan') {
-    message += 'Tempahan anda telah dibatalkan. Sila hubungi pihak ITU jika ada sebarang pertanyaan. ';
+    message += 'Tempahan anda telah dibatalkan. ';
   } else {
     message += 'Status tempahan anda telah dikemaskini. ';
   }
@@ -1081,7 +1083,7 @@ document.getElementById('orderModal').addEventListener('click',function(e){if(e.
 // ══════════════════════════════════════════════
 function renderDashboard() {
   var counts={};
-  ['Baru','Disahkan','Sedang Diproses','Siap Kutip','Selesai','Dibatalkan'].forEach(function(s){counts[s]=0;});
+  ['Baru','Disahkan','Sedang Diproses','Selesai','Tidak Ambil','Dibatalkan'].forEach(function(s){counts[s]=0;});
   allData.forEach(function(r){counts[r._status]=(counts[r._status]||0)+1;});
 
   var now=new Date(); var curM=String(now.getMonth()+1).padStart(2,'0'); var curY=String(now.getFullYear());
@@ -1091,7 +1093,7 @@ function renderDashboard() {
   document.getElementById('statTotal').textContent   = allData.length;
   document.getElementById('statBaru').textContent    = counts['Baru']||0;
   document.getElementById('statProses').textContent  = (counts['Disahkan']||0)+(counts['Sedang Diproses']||0);
-  document.getElementById('statSelesai').textContent = (counts['Selesai']||0)+(counts['Siap Kutip']||0);
+  document.getElementById('statSelesai').textContent = counts['Selesai']||0;
   document.getElementById('statBatal').textContent   = counts['Dibatalkan']||0;
   document.getElementById('statBulanIni').textContent= bulanIni;
   document.getElementById('statBulanLabel').textContent = MONTHS[parseInt(curM)]+' '+curY;
@@ -1258,8 +1260,8 @@ function renderCharts() {
   destroyChart('chartSource');
   chartInstances['chartSource']=new Chart(document.getElementById('chartSource'),{type:'doughnut',data:{labels:Object.keys(srcCounts),datasets:[{data:Object.values(srcCounts),backgroundColor:['#1a7a3c','#2563eb','#f5a623','#9333ea','#d63031','#0891b2']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
 
-  var so=['Baru','Disahkan','Sedang Diproses','Siap Kutip','Selesai','Dibatalkan'];
-  var sc=['#3b82f6','#10b981','#f59e0b','#8b5cf6','#059669','#ef4444'];
+  var so=['Baru','Disahkan','Sedang Diproses','Selesai','Tidak Ambil','Dibatalkan'];
+  var sc=['#3b82f6','#10b981','#f59e0b','#059669','#eab308','#ef4444'];
   var stC={};so.forEach(function(s){stC[s]=0;}); data.forEach(function(r){stC[r._status]=(stC[r._status]||0)+1;});
   destroyChart('chartStatus');
   chartInstances['chartStatus']=new Chart(document.getElementById('chartStatus'),{type:'bar',data:{labels:so,datasets:[{data:so.map(function(s){return stC[s];}),backgroundColor:sc.map(function(c){return c+'aa';}),borderColor:sc,borderWidth:2,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}}}});
@@ -1348,18 +1350,18 @@ function showPage(name) {
 //  UTILS
 // ══════════════════════════════════════════════
 function makeBadge(status){
-  var s=String(status||'Baru').trim();
+  var s=normalizeStatusClient(status);
   var map=[
     {m:/^baru$/i,c:'Baru'},{m:/^disah/i,c:'Disahkan'},
     {m:/^sedang|^dalam\s*proses|^proses/i,c:'SedangDiproses'},
-    {m:/^siap|^ready/i,c:'SiapKutip'},
     {m:/^selesai|^done|^complete/i,c:'Selesai'},
     {m:/^batal|^cancel/i,c:'Dibatalkan'},
-    {m:/^tak\s*ambil|^tidak\s*ambil|^x\s*ambil/i,c:'TakAmbil'},
+    {m:/^tak\s*ambil|^tidak\s*ambil|^x\s*ambil/i,c:'TidakAmbil'},
   ];
   var found=map.find(function(x){return x.m.test(s);}); var cls=found?found.c:'Baru';
   return '<span class="badge badge-'+cls+'">'+escHtml(s)+'</span>';
 }
+function normalizeStatusClient(status){var s=String(status||'').trim();if(/^siap\s*kutip$/i.test(s))return 'Sedang Diproses';return /^tak\s*ambil$/i.test(s)?'Tidak Ambil':(s||'Baru');}
 function escHtml(str){return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function truncate(str,n){return str.length>n?str.substring(0,n)+'…':str;}
 function showLoading(show){document.getElementById('loadingScreen').classList.toggle('hidden',!show);}

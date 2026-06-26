@@ -228,8 +228,9 @@ Butang yang tersedia:
 | `📋 Copy Mesej` | Salin mesej ke clipboard |
 
 Mesej dijana dalam Bahasa Malaysia berdasarkan status semasa yang dipilih dalam modal:
-- `Siap Kutip` → tambah arahan kutipan
-- `Dibatalkan` → minta pembeli hubungi ITU jika ada pertanyaan
+- `Selesai` → maklumkan tempahan telah selesai
+- `Tidak Ambil` → maklumkan tempahan direkodkan sebagai tidak diambil/dituntut
+- `Dibatalkan` → maklumkan tempahan telah dibatalkan
 - Status lain → maklumkan status tempahan telah dikemaskini
 
 Feature ini frontend-only dalam `index.html`. Ia tidak memerlukan perubahan GAS, tidak menulis ke Google Sheets, dan tidak auto-send WhatsApp/email.
