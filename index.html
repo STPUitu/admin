@@ -142,12 +142,24 @@
 
   /* ── TABLE ── */
   .table-wrap { overflow-x: auto; }
+  .orders-mobile-cards { display: none; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th { background: var(--green-dark); color: #fff; padding: 10px 12px; text-align: left; font-weight: 600; white-space: nowrap; position: sticky; top: 0; }
   td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   tr:hover td { background: #f9fffe; }
   tr.selected td { background: #e8f5ed; }
   .no-data td { text-align: center; color: var(--gray); padding: 40px; }
+
+  @media (max-width: 768px) {
+    #page-orders .table-wrap { display: none; }
+    .orders-mobile-cards { display: flex; flex-direction: column; gap: 10px; padding: 12px; }
+    .order-mobile-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; box-shadow: var(--shadow); }
+    .order-mobile-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+    .order-mobile-name { font-size: 14px; font-weight: 700; color: #111827; line-height: 1.3; }
+    .order-mobile-meta { font-size: 12px; color: var(--gray); line-height: 1.5; margin-top: 2px; }
+    .order-mobile-fields { display: grid; gap: 4px; margin: 10px 0; font-size: 12px; color: #374151; }
+    .order-mobile-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+  }
 
   /* ── BADGES ── */
   .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap; }
@@ -443,6 +455,7 @@
       <div class="table-wrap" style="max-height:55vh;overflow-y:auto;">
         <table><thead id="ordersHead"></thead><tbody id="ordersTbody"><tr class="no-data"><td colspan="10">Memuatkan...</td></tr></tbody></table>
       </div>
+      <div class="orders-mobile-cards" id="ordersMobileCards"></div>
       <div class="pagination">
         <span class="page-info" id="pageInfo">—</span>
         <button class="page-btn" id="btnPrev" onclick="changePage(-1)">‹ Prev</button>
@@ -792,6 +805,9 @@ function getPhoneKey(row) {
 function getEmailKey(row) {
   return Object.keys(row).find(function(k) { return !k.startsWith('_') && /email/i.test(k); });
 }
+function getOrderNumberKey(row) {
+  return Object.keys(row).find(function(k) { return !k.startsWith('_') && /no\s*tempahan|nombor\s*tempahan|order\s*no|order\s*number/i.test(k); });
+}
 function getRatingKey(row) {
   return Object.keys(row).find(function(k) { return !k.startsWith('_') && /rating|penilaian|markah|skor|bintang/i.test(k); });
 }
@@ -868,6 +884,7 @@ function clearFilter() {
 function renderOrdersTable() {
   var thead = document.getElementById('ordersHead');
   var tbody = document.getElementById('ordersTbody');
+  var mobileCards = document.getElementById('ordersMobileCards');
   var start = (currentPage-1)*perPage;
   var end   = Math.min(start+perPage, filteredData.length);
   var page  = filteredData.slice(start, end);
@@ -878,6 +895,7 @@ function renderOrdersTable() {
 
   if (page.length === 0) {
     tbody.innerHTML = '<tr class="no-data"><td colspan="'+(showCols.length+5)+'"><div class="empty-state"><div class="big-icon">📭</div><p>Tiada rekod dijumpai</p></div></td></tr>';
+    mobileCards.innerHTML = '<div class="empty-state"><div class="big-icon">📭</div><p>Tiada rekod dijumpai</p></div>';
   } else {
     tbody.innerHTML = page.map(function(row, i) {
       var cols = showCols.map(function(h){return '<td title="'+escHtml(String(row[h]||''))+'">'+truncate(escHtml(String(row[h]||'')),30)+'</td>';}).join('');
@@ -887,6 +905,28 @@ function renderOrdersTable() {
         +'<td><span class="source-tag">'+escHtml(row._source)+'</span></td>'
         +cols+'<td>'+makeBadge(row._status)+'</td>'
         +'<td><button class="btn btn-outline btn-sm" onclick="openModal(\''+escHtml(row._id)+'\')">✏️ Buka</button></td></tr>';
+    }).join('');
+    mobileCards.innerHTML = page.map(function(row) {
+      var tsKey = getTimestampKey(row);
+      var nameKey = getNameKey(row);
+      var phoneKey = getPhoneKey(row);
+      var orderNoKey = getOrderNumberKey(row);
+      var ts = tsKey ? String(row[tsKey] || '—').substring(0, 16) : '—';
+      var name = nameKey ? String(row[nameKey] || '—') : '—';
+      var phone = phoneKey ? String(row[phoneKey] || '').trim() : '';
+      var orderNo = orderNoKey ? String(row[orderNoKey] || '').trim() : '';
+
+      return '<div class="order-mobile-card">'
+        + '<div class="order-mobile-card-top"><div><div class="order-mobile-name">'+escHtml(name)+'</div>'
+        + '<div class="order-mobile-meta">'+escHtml(row._source || '—')+'</div>'
+        + '<div class="order-mobile-meta">'+escHtml(ts)+'</div></div>'
+        + '<div>'+makeBadge(row._status)+'</div></div>'
+        + '<div class="order-mobile-fields">'
+        + (phone ? '<div><strong>No. Tel:</strong> '+escHtml(phone)+'</div>' : '')
+        + (orderNo ? '<div><strong>No. Tempahan:</strong> '+escHtml(orderNo)+'</div>' : '')
+        + '</div>'
+        + '<div class="order-mobile-actions"><button class="btn btn-outline btn-sm" onclick="openModal(\''+escHtml(row._id)+'\')">✏️ Buka</button></div>'
+        + '</div>';
     }).join('');
   }
 
